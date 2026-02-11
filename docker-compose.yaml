@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - smolearl-network
+
+  postgres:
+    image: postgres:18-alpine3.22
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: smolearl
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: NOTHING
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - smolearl-network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  smolearl-network:
+    driver: bridge
