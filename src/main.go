@@ -13,6 +13,12 @@ func main() {
 	}
 	defer CloseRedis()
 
+	// Initialize Kafka
+	if err := InitKafka(); err != nil {
+		log.Fatalf("Failed to initialize Kafka: %v", err)
+	}
+	defer CloseKafka()
+
 	// Initialize PostgreSQL
 	if err := InitPostgres(); err != nil {
 		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
