@@ -1,0 +1,51 @@
+workflow:
+  rules:
+    - when: always
+
+stages:
+  - test
+  # - build
+  - deploy
+
+variables:
+  REGISTRY: "192.168.1.253:8102"
+  IMAGE: "$REGISTRY/$CI_PROJECT_PATH"
+
+####################
+# Go tests
+####################
+test:
+  stage: test
+  image: golang:1.26rc3-alpine3.23
+  tags:
+    - golang
+  script:
+    - cd src
+    - go test ./...
+
+####################
+# Build
+####################
+# build:
+#   stage: build
+#   tags:
+#     - docker
+#   script:
+#     - docker build -t smolearl:latest .
+
+####################
+# Optional deploy gate
+####################
+deploy:
+  stage: deploy
+  image: docker:latest
+  tags:
+    - docker
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u root --password-stdin $REGISTRY
+  script:
+    - docker build -t smolearl .
+    - docker tag smolearl $IMAGE:latest
+    - docker push $IMAGE:latest
+  only:
+    - main
