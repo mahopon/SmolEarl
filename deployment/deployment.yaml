@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smolearl
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: smolearl
+  template:
+    metadata:
+      labels:
+        app: smolearl
+    spec:
+      imagePullSecrets:
+      - name: home2-registry
+      containers:
+      - name: smolearl
+        image: registry.home2.lan/mahopon/smolearl:latest
+        ports:
+        - containerPort: 8040
+        env:
+        # ConfigMap values
+        - name: HOST
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: HOST
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: PORT
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: REDIS_PORT
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: POSTGRES_HOST
+        - name: POSTGRES_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: POSTGRES_PORT
+        - name: POSTGRES_USER
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: POSTGRES_USER
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: POSTGRES_DB
+        - name: KAFKA_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: KAFKA_BROKER
+        - name: KAFKA_CLICK_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: smolearl-config
+              key: KAFKA_CLICK_TOPIC
+        # Secret values
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smolearl-secret
+              key: REDIS_PASSWORD
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: smolearl-secret
+              key: POSTGRES_PASSWORD
