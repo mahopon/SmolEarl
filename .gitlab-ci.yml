@@ -8,8 +8,7 @@ stages:
   - deploy
 
 variables:
-  REGISTRY: "192.168.1.253:8102"
-  IMAGE: "$REGISTRY/$CI_PROJECT_PATH"
+  IMAGE: "$CI_REGISTRY/$CI_PROJECT_PATH"
 
 ####################
 # Go tests
@@ -42,7 +41,7 @@ deploy:
   tags:
     - docker
   before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u root --password-stdin $REGISTRY
+    - echo $CI_REGISTRY_PASSWORD | docker login -u mahopon --password-stdin $CI_REGISTRY
   script:
     - docker build -t smolearl .
     - docker tag smolearl $IMAGE:latest
