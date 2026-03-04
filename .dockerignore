@@ -1,0 +1,9 @@
+.git/
+.gitlab/
+.gitignore
+.gitlab-ci.yml
+README.md
+docker-compose.yaml
+Dockerfile
+deployment/
+
