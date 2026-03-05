@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: smolearl-service
+  labels:
+    metrics: enabled
 spec:
   type: NodePort
   selector:
