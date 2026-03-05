@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         app: smolearl
+        scrape_logs: enabled
     spec:
       imagePullSecrets:
       - name: home2-registry
