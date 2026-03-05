@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 )
 
 type Controller struct {
@@ -18,21 +17,6 @@ func NewController(service *Service) *Controller {
 
 // CreateHandler handles POST /create requests
 func (c *Controller) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	path := r.URL.Path
-	if path != "/create" && path != "/create/" {
-		if path == "/create" {
-			http.Redirect(w, r, "/create/", http.StatusMovedPermanently)
-			return
-		}
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
 	var data map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -64,21 +48,12 @@ func (c *Controller) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetHandler handles GET /{id} requests
 func (c *Controller) GetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Extract ID from URL path
-	path := strings.TrimPrefix(r.URL.Path, "/")
+	path := r.PathValue("path")
 
 	// If path is empty (root path), return a default response or redirect
 	if path == "" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"message": "Welcome to SmolEarl API",
-			"version": "1.0",
-		})
+		http.Error(w, "Missing input", http.StatusBadRequest)
 		return
 	}
 
@@ -96,32 +71,13 @@ func (c *Controller) GetHandler(w http.ResponseWriter, r *http.Request) {
 
 // StatsHandler handles GET /stats/{id} requests
 func (c *Controller) StatsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Handle missing trailing slash
-	path := r.URL.Path
-	if path != "/stats" && path != "/stats/" {
-		// Redirect to the correct path with trailing slash
-		if path == "/stats" {
-			http.Redirect(w, r, "/stats/", http.StatusMovedPermanently)
-			return
-		}
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	// Extract ID from URL path
-	path = strings.TrimPrefix(r.URL.Path, "/stats/")
-	if path == "" {
+	id := r.PathValue("id")
+	if id == "" {
 		http.Error(w, "Missing ID", http.StatusBadRequest)
 		return
 	}
 
-	// Call service to get stats
-	stats, err := c.service.GetStats(path)
+	stats, err := c.service.GetStats(id)
 	if err != nil {
 		http.Error(w, "Stats not found", http.StatusNotFound)
 		return
@@ -130,4 +86,13 @@ func (c *Controller) StatsHandler(w http.ResponseWriter, r *http.Request) {
 	// Return stats data
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stats)
+}
+
+// StatusHandler handles GET /status requests
+func (c *Controller) StatusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"message": "Welcome to SmolEarl API",
+		"version": "1.0",
+	})
 }

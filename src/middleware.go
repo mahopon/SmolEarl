@@ -3,7 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
+
+	infra_prom "github.com/mahopon/SmolEarl/infra/prometheus"
 )
 
 // LoggingMiddleware logs all HTTP requests and responses
@@ -11,14 +15,12 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
-
 		wrapper := &responseWriterWrapper{ResponseWriter: w, statusCode: http.StatusOK}
 
 		next.ServeHTTP(wrapper, r)
 
 		duration := time.Since(start)
-		log.Printf("%s %s %d %v", r.RemoteAddr, r.Method, wrapper.statusCode, duration)
+		log.Printf("%s %s %s %d %v", r.RemoteAddr, r.Method, r.URL.Path, wrapper.statusCode, duration)
 
 	})
 }
@@ -45,6 +47,31 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		// Otherwise, continue processing the request.
 		next.ServeHTTP(w, r)
 	})
+}
+
+func StripTrailingSlashMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if len(path) > 1 && path[len(path)-1] == '/' {
+			r.URL.Path = path[:len(path)-1]
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func PrometheusHTTPMiddleware(httpMetrics *infra_prom.HTTPMetrics) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			path := r.URL.Path
+			rw := &responseWriterWrapper{w, http.StatusOK}
+			next.ServeHTTP(rw, r)
+			if !strings.Contains(path, "metrics") {
+				httpMetrics.TotalRequests.WithLabelValues(
+					strconv.Itoa(rw.statusCode), r.Method,
+				).Inc()
+			}
+		})
+	}
 }
 
 // responseWriterWrapper wraps http.ResponseWriter to capture the status code
