@@ -7,6 +7,7 @@ spec:
   selector:
     app: smolearl
   ports:
-    - port: 18090      # internal cluster port
+    - name: http
+      port: 18090      # internal cluster port
       targetPort: 8000 # container port
       nodePort: 31000  # port accessible on the node

@@ -17,8 +17,8 @@ spec:
       containers:
       - name: smolearl
         image: registry.home2.lan/mahopon/smolearl:latest
-        ports:
-        - containerPort: 8040
+        # ports:
+        # - containerPort: 8040
         env:
         # ConfigMap values
         - name: HOST
