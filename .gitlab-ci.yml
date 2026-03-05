@@ -40,6 +40,7 @@ deploy:
     - docker build -t smolearl .
     - docker tag smolearl $IMAGE:$CI_COMMIT_SHA $IMAGE:latest
     - docker push $IMAGE:$CI_COMMIT_SHA
+    - docker tag smolearl $IMAGE:latest
     - docker push $IMAGE:latest
   only:
     - main
