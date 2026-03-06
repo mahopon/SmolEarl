@@ -9,6 +9,8 @@ spec:
       app: smolearl
   template:
     metadata:
+      annotations:
+        promtail.io/scrape: "true"
       labels:
         app: smolearl
         scrape_logs: enabled
