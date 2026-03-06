@@ -12,6 +12,8 @@ spec:
       labels:
         app: smolearl
         scrape_logs: enabled
+        app.kubernetes.io/name: smolearl
+        app.kubernetes.io/instance: smolearl
     spec:
       imagePullSecrets:
       - name: home2-registry
