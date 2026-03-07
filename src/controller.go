@@ -64,7 +64,6 @@ func (c *Controller) GetHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Entry not found", http.StatusNotFound)
 		return
 	}
-	log.Print(entry)
 	// Return entry data
 	entryUrl := entry["url"].(string)
 	http.Redirect(w, r, entryUrl, http.StatusFound)
