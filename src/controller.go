@@ -65,7 +65,6 @@ func (c *Controller) GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return entry data
-	w.Header().Set("Content-Type", "application/json")
 	entryUrl := entry["url"].(string)
 	http.Redirect(w, r, entryUrl, http.StatusFound)
 }
