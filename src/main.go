@@ -52,7 +52,7 @@ func main() {
 	addr := ":" + config.AppConfig.Port
 	fmt.Printf("Starting server on http://%s:%s\n", config.AppConfig.Host, config.AppConfig.Port)
 	fmt.Printf("Prometheus metrics available at http://%s:%s/metrics\n", config.AppConfig.Host, config.AppConfig.Port)
-
+	fmt.Print("YOLO")
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		fmt.Printf("Server error: %v\n", err)
 	}
