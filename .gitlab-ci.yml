@@ -31,12 +31,8 @@ deploy:
   variables:
     IMAGE: "$CI_REGISTRY/$CI_PROJECT_PATH"
   before_script:
-    - apk add --no-cache curl
-    - curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq
-    - chmod +x /usr/local/bin/yq
     - echo $CI_REGISTRY_PASSWORD | docker login -u mahopon --password-stdin $CI_REGISTRY
   script:
-    - yq e ".spec.template.spec.containers[0].image = \"$CI_REGISTRY/smolearl:$CI_COMMIT_SHA\"" -i deployment/deployment.yaml
     - docker build -t smolearl .
     - docker tag smolearl $IMAGE:$CI_COMMIT_SHA
     - docker push $IMAGE:$CI_COMMIT_SHA
