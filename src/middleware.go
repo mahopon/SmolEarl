@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,7 +20,25 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(wrapper, r)
 
 		duration := time.Since(start)
-		log.Printf("%s %s %s %d %v", r.RemoteAddr, r.Method, r.URL.Path, wrapper.statusCode, duration)
+
+		logAttrs := []any{
+			slog.String("remote_addr", r.RemoteAddr),
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status", wrapper.statusCode),
+			slog.Duration("duration", duration),
+		}
+
+		switch {
+		case wrapper.statusCode >= 500:
+			slog.Error("request completed with server error", logAttrs...)
+		case wrapper.statusCode >= 400:
+			slog.Warn("request completed with client error", logAttrs...)
+		case wrapper.statusCode >= 300:
+			slog.Info("request completed with redirect", logAttrs...)
+		default:
+			slog.Debug("request completed successfully", logAttrs...)
+		}
 
 	})
 }
