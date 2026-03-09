@@ -33,7 +33,10 @@ func (s *Service) SetRedis(r *redis.Redis) {
 
 // Create creates a new entry with write-through to PostgreSQL
 func (s *Service) Create(data map[string]any, customAlias string) (string, error) {
-	incomingUrl := data["url"].(string)
+	incomingUrl, ok := data["url"].(string)
+	if !ok {
+		return "", fmt.Errorf("Invalid request body, received %v", incomingUrl)
+	}
 	if _, err := url.Parse(incomingUrl); err != nil {
 		return "", err
 	}

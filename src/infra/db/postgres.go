@@ -3,10 +3,12 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 
 	config "github.com/mahopon/SmolEarl/config"
 )
@@ -18,10 +20,11 @@ var (
 
 type DB struct {
 	PostgresPool *pgxpool.Pool
+	Metrics      *DBMetrics
 }
 
 // InitPostgres initializes the PostgreSQL connection pool
-func InitPostgres() (*DB, error) {
+func InitPostgres(reg prometheus.Registerer) (*DB, error) {
 	connStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		AppConfig.DBUser,
@@ -41,7 +44,9 @@ func InitPostgres() (*DB, error) {
 		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
 	}
 
-	return &DB{PostgresPool: pool}, nil
+	metrics := NewDBMetrics(reg)
+
+	return &DB{PostgresPool: pool, Metrics: metrics}, nil
 }
 
 // ClosePostgres closes the PostgreSQL connection pool
@@ -75,13 +80,37 @@ func (db *DB) InitSchema() error {
 }
 
 func (db *DB) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	start := time.Now()
 	rows, err := db.PostgresPool.Query(ctx, sql, args...)
+	db.Metrics.Latency.WithLabelValues("query").Observe(time.Since(start).Seconds())
+
+	if err != nil {
+		db.Metrics.QueryErrors.WithLabelValues("query").Inc()
+	}
+	db.Metrics.QueryCount.WithLabelValues("query").Inc()
+
+	db.updatePoolMetrics()
 
 	return rows, err
 }
 
 func (db *DB) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	start := time.Now()
 	result, err := db.PostgresPool.Exec(ctx, sql, args...)
+	db.Metrics.Latency.WithLabelValues("exec").Observe(time.Since(start).Seconds())
+
+	if err != nil {
+		db.Metrics.QueryErrors.WithLabelValues("exec").Inc()
+	}
+	db.Metrics.QueryCount.WithLabelValues("exec").Inc()
+
+	db.updatePoolMetrics()
 
 	return result, err
+}
+
+func (db *DB) updatePoolMetrics() {
+	stats := db.PostgresPool.Stat()
+	db.Metrics.PoolActive.WithLabelValues().Set(float64(stats.AcquiredConns()))
+	db.Metrics.PoolIdle.WithLabelValues().Set(float64(stats.TotalConns() - stats.AcquiredConns()))
 }

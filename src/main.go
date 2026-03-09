@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("Failed to initialize Redis: %v", err)
 	}
 
-	dbClient, err := db.InitPostgres()
+	dbClient, err := db.InitPostgres(reg)
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
 	}
@@ -48,7 +48,7 @@ func main() {
 	handler = LoggingMiddleware(handler)
 	handler = CORSMiddleware(handler)
 	handler = PrometheusHTTPMiddleware(httpMetrics)(handler)
-	fmt.Print("This is a test!")
+
 	addr := ":" + config.AppConfig.Port
 	fmt.Printf("Starting server on http://%s:%s\n", config.AppConfig.Host, config.AppConfig.Port)
 	fmt.Printf("Prometheus metrics available at http://%s:%s/metrics\n", config.AppConfig.Host, config.AppConfig.Port)

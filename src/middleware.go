@@ -80,13 +80,21 @@ func StripTrailingSlashMiddleware(next http.Handler) http.Handler {
 func PrometheusHTTPMiddleware(httpMetrics *infra_prom.HTTPMetrics) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			httpMetrics.RequestsInFlight.Inc()
+			start := time.Now()
 			path := r.URL.Path
 			rw := &responseWriterWrapper{w, http.StatusOK}
 			next.ServeHTTP(rw, r)
+			duration := time.Since(start).Seconds()
+			httpMetrics.RequestsInFlight.Dec()
 			if !strings.Contains(path, "metrics") {
 				httpMetrics.TotalRequests.WithLabelValues(
 					strconv.Itoa(rw.statusCode), r.Method,
 				).Inc()
+				httpMetrics.Latency.WithLabelValues(
+					r.Method,
+					r.URL.Path,
+				).Observe(duration)
 			}
 		})
 	}
